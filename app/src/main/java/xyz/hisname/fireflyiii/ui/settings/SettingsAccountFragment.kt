@@ -97,7 +97,16 @@ class SettingsAccountFragment: BaseSettings() {
             authMethod.summary = resources.getString(R.string.personal_access_token)
         }
         fireflyUrlPref.setOnPreferenceChangeListener { preference, newValue  ->
-            preference.summary = newValue.toString()
+            val baseUrl = newValue.toString()
+            preference.summary = baseUrl
+            AppPref(sharedPref).baseUrl = baseUrl
+
+            val fireflyUserDatabase = FireflyUserDatabase.getInstance(requireContext())
+            runBlocking(Dispatchers.IO) {
+                val uniqueHash = fireflyUserDatabase.fireflyUserDao().getUniqueHash()
+                fireflyUserDatabase.fireflyUserDao().updateActiveUserHost(uniqueHash, baseUrl)
+            }
+
             FireflyClient.destroyInstance()
             true
         }
